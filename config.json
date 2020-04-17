@@ -1,0 +1,13 @@
+{
+    "users": [
+        {
+            "name": "Michael",
+            "email": "michael.pu123@gmail.com"
+        },
+        {
+            "name": "Tester",
+            "email": "tester@gmail.com"
+        }
+    ],
+    "api-port": 4001
+}
