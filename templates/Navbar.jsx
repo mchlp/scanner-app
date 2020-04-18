@@ -7,6 +7,20 @@ const Navbar = () => (
             <button className='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarText' aria-controls='navbarText' aria-expanded='false' aria-label='Toggle navigation'>
                 <span className='navbar-toggler-icon'></span>
             </button>
+
+            <div className='collapse navbar-collapse' id='navbarSupportedContent'>
+                <ul className='navbar-nav ml-auto'>
+                    <li className='nav-item'>
+                        <a className='nav-link' href='/'>Home</a>
+                    </li>
+                    <li className='nav-item'>
+                        <a className='nav-link' href='/saved'>Saved Scans</a>
+                    </li>
+                    <li className='nav-item'>
+                        <a className='nav-link' href='/admin'>Admin</a>
+                    </li>
+                </ul>
+            </div>
         </nav>
     </div>
 );

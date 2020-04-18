@@ -1,159 +1,188 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Axios from 'axios';
 import LoadingButton from './LoadingButton';
+import ScanListContext from './ScanListContext';
 
-export default class ConfigSection extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            status: this.CONSTANTS.SCAN_STATUS.READY,
-            users: [],
-            sources: [],
-            message: null,
-            curScanId: null,
+export default function ConfigSection(props) {
+
+    const STATUSES = {
+        NOT_CONNECTED: 'not_connected',
+        READY: 'ready',
+        SCANNING_NOT_AUTH: 'scanning_not_auth',
+        SCANNING: 'scanning',
+        DONE_SCAN: 'scan_done',
+        PACKAGING: 'packaging',
+        ERROR: 'error'
+    };
+
+    const [status, setStatus] = React.useState(STATUSES.NOT_CONNECTED);
+    const [statusText, setStatusText] = React.useState('Not Connected');
+    const [statusRed, setStatusRed] = React.useState(true);
+    const [sources, setSources] = React.useState([]);
+    const [message, setMessage] = React.useState(null);
+    const [scanId, setScanId] = React.useState(null);
+    const { scanList, setScanList } = React.useContext(ScanListContext);
+
+    const checkStatusCallback = React.useRef();
+    const checkStatusInterval = React.useRef();
+
+    React.useEffect(() => {
+        const initState = async () => {
+            const sourcesRes = await Axios.get('/api/sources');
+            setSources(sourcesRes.data);
         };
-    }
+        setScanId(localStorage.getItem('scanId'));
+        initState();
+        return async function cleanup() {
+            clearInterval(checkStatusInterval.current);
+            await Axios.get('/api/abort', {
+                scanId
+            });
+        };
+    }, []);
 
-    async componentDidMount() {
-        const usersRes = await Axios.get('/api/users');
-        const sourcesRes = await Axios.get('/api/sources');
-        this.setState({
-            users: usersRes.data,
-            sources: sourcesRes.data
-        });
-    }
+    React.useEffect(() => {
+        checkStatusCallback.current = checkStatus;
+    });
 
-    CONSTANTS = {
-        SCAN_STATUS: {
-            READY: 'ready',
-            SCANNING_NOT_AUTH: 'scanning_not_auth',
-            SCANNING: 'scanning',
-            DONE_SCAN: 'scan_done',
-            PACKAGING: 'packaging',
-            ERROR: 'error'
-        }
-    }
+    React.useEffect(() => {
+        const func = async () => {
+            await checkStatus();
+        };
+        localStorage.setItem('scanId', scanId);
+        console.log(scanId);
+        func();
+    }, [scanId]);
 
-    handleScan = async (e) => {
+    const handleScan = async (e) => {
         const res = await Axios.post('/api/scan', {
-            user: document.getElementById('user-select').value,
-            source: document.getElementById('source-select').value,
+            source: document.getElementById('source-select').value
         });
         if (res.data.success) {
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.SCANNING,
-                message: res.data.message,
-                scanId: res.data.scanId
-            });
-            this.checkScanInterval = setInterval(this.checkScan, 2000);
+            setScanId(res.data.scanId);
+            const tick = () => {
+                checkStatusCallback.current();
+            };
+            clearInterval(checkStatusInterval.current);
+            checkStatusInterval.current = setInterval(tick, 1000);
         } else {
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.SCANNING_NOT_AUTH,
-                message: 'Someone else is currently scanning. Please try again later.'
-            });
+            setStatus(STATUSES.SCANNING_NOT_AUTH);
+            setMessage('Someone else is currently scanning. Please try again later.');
         }
-    }
+    };
 
-    checkScan = async (e) => {
+    const saveScan = async (e) => {
+        await Axios.post('/api/save', {
+            scanId
+        });
+    };
+
+    const checkStatus = async (e) => {
         let res;
         res = await Axios.post('/api/status', {
-            scanId: this.state.scanId
+            scanId
         });
-
-        if (res.data.status === this.CONSTANTS.SCAN_STATUS.DONE_SCAN || res.data.status === this.CONSTANTS.SCAN_STATUS.SCANNING) {
-            this.props.updateScanList(res.data.scans);
+        setStatus(res.data.status);
+        switch (res.data.status) {
+            case STATUSES.NOT_CONNECTED:
+                setMessage('Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.');
+                setStatusText('Not Connected');
+                setStatusRed(true);
+                break;
+            case STATUSES.READY:
+                if (status === STATUSES.PACKAGING) {
+                    setMessage('Scan successfully saved. Go to old scans page to download. Reload to start another scan.');
+                } else {
+                    setMessage('Scanner is ready.');
+                }
+                if (checkStatusInterval.current) {
+                    clearInterval(checkStatusInterval.current);
+                    checkStatusInterval.current = null;
+                }
+                setStatusText('Ready');
+                setStatusRed(false);
+                setScanList([]);
+                break;
+            case STATUSES.SCANNING_NOT_AUTH:
+                setMessage('Someone else is currently scanning. Please reload and try again later.');
+                setStatusText('In Use');
+                setStatusRed(true);
+                break;
+            case STATUSES.SCANNING:
+                setStatusText('Scanning');
+                setStatusRed(false);
+                setMessage('Scanning... Scan Job ID: ' + scanId);
+                setScanList(res.data.scanList);
+                break;
+            case STATUSES.DONE_SCAN:
+                setStatusText('Scan Complete');
+                setStatusRed(false);
+                setMessage('Scan Complete. Please preview the pages and click "Send Email" when ready or scan more pages.');
+                setScanList(res.data.scanList);
+                break;
+            case STATUSES.PACKAGING:
+                setStatusText('Packaging Scan');
+                setStatusRed(false);
+                setMessage('Packaging scan... Please wait.');
+                break;
+            case STATUSES.ERROR:
+                setStatusText('Error Encountered');
+                setStatusRed(true);
+                setMessage('An error occured. Please reload and try again.');
+                break;
         }
-        if (res.data.status === this.CONSTANTS.SCAN_STATUS.DONE_SCAN) {
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.DONE_SCAN,
-                message: 'Scan Complete. Please preview the pages and click "Send Email" when ready or scan more pages.',
-            });
-            this.props.updateScanList(res.data.scans);
-        } else if (res.data.status === this.CONSTANTS.SCAN_STATUS.PACKAGING) {
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.PACKAGING,
-                message: 'Packaging and emailing scan... Please wait.',
-            });
-        } else if (res.data.status === this.CONSTANTS.SCAN_STATUS.READY && this.state.status === this.CONSTANTS.SCAN_STATUS.PACKAGING) {
-            clearInterval(this.checkScanInterval);
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.READY,
-                scanId: null,
-                message: 'Email Sent Successfully! Reload to start another scan.',
-            });
-        } else if (res.data.status === this.CONSTANTS.SCAN_STATUS.ERROR) {
-            clearInterval(this.checkScanInterval);
-            await this.setState({
-                status: this.CONSTANTS.SCAN_STATUS.ERROR,
-                scanId: null,
-                message: 'An error occured. Please reload and try again.',
-            });
-        }
-    }
+    };
 
-    sendEmail = async (e) => {
-        await Axios.post('/api/sendemail', {
-            scanId: this.state.scanId
+    const clearError = async (e) => {
+        await Axios.post('/api/abort', {
+            force: true
         });
-        await this.checkScan();
-    }
+        await checkStatus();
+    };
 
-    render() {
-        let usersSelectList;
-        let usersLoaded = this.state.users.length > 0;
-        if (usersLoaded) {
-            usersSelectList = this.state.users.map((user) => {
-                return (
-                    <option key={user.id} value={user.id}>{user.name} - {user.email}</option>
-                );
-            });
-        } else {
-            usersSelectList = (
-                <option>Users Loading...</option>
+    let sourcesSelectList;
+    let sourcesLoaded = sources.length > 0;
+    if (sourcesLoaded) {
+        sourcesSelectList = sources.map((sources) => {
+            return (
+                <option key={sources.id} value={sources.id}>{sources.name}</option>
             );
-        }
-
-        let sourcesSelectList;
-        let sourcesLoaded = this.state.sources.length > 0;
-        if (sourcesLoaded) {
-            sourcesSelectList = this.state.sources.map((sources) => {
-                return (
-                    <option key={sources.id} value={sources.id}>{sources.name}</option>
-                );
-            });
-        } else {
-            sourcesSelectList = (
-                <option>Sources Loading...</option>
-            );
-        }
-
-        const scanBtnDisabled = this.state.status === this.CONSTANTS.SCAN_STATUS.SCANNING;
-        const scanBtnLoading = this.state.status === this.CONSTANTS.SCAN_STATUS.SCANNING ? 1 : 0;
-        const sendEmailBtnDisabled = this.state.status !== this.CONSTANTS.SCAN_STATUS.DONE_SCAN;
-        const sendEmailBtnLoading = this.state.status === this.CONSTANTS.SCAN_STATUS.PACKAGING ? 1 : 0;
-
-        return (
-            <div>
-                <div className='form-group'>
-                    <label htmlFor='user-select'>Select User:</label>
-                    <select disabled={!usersLoaded} className='form-control' id='user-select'>
-                        {usersSelectList}
-                    </select>
-                </div>
-                <div className='form-group'>
-                    <label htmlFor='source-select'>Select Source:</label>
-                    <select disabled={!usersLoaded} className='form-control' id='source-select'>
-                        {sourcesSelectList}
-                    </select>
-                </div>
-                <div>
-                    <LoadingButton type='button' disabled={scanBtnDisabled} loading={scanBtnLoading} onClick={this.handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
-                    <LoadingButton type='button' disabled={sendEmailBtnDisabled} loading={sendEmailBtnLoading} onClick={this.sendEmail} className='btn btn-success ml-2'>Send Email</LoadingButton>
-                </div>
-                <div hidden={!this.state.message} className='alert alert-secondary mt-3' role='alert'>
-                    {this.state.message}
-                </div>
-            </div >
+        });
+    } else {
+        sourcesSelectList = (
+            <option>Sources Loading...</option>
         );
     }
+
+    const scanBtnHidden = !(status === STATUSES.READY || status === STATUSES.DONE_SCAN);
+    const scanBtnLoading = status === STATUSES.SCANNING ? 1 : 0;
+    const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
+    const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
+    const clearErrorBtnHidden = !(status === STATUSES.ERROR);
+
+    return (
+        <div>
+            <div className={'card text-white bg-primary mb-2 ' + (statusRed ? 'bg-danger' : 'bg-success')}>
+                <div className='card-body'>
+                    <h5 className='card-text text-center'>
+                        <b>Status:</b> {statusText}
+                    </h5>
+                </div>
+            </div>
+            <div className='form-group'>
+                <label htmlFor='source-select'>Select Source:</label>
+                <select disabled={!sourcesLoaded} className='form-control' id='source-select'>
+                    {sourcesSelectList}
+                </select>
+            </div>
+            <div>
+                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
+                <LoadingButton type='button' hidden={sendEmailBtnHidden} loading={sendEmailBtnLoading} onClick={saveScan} className='btn btn-success ml-2'>Save Scan</LoadingButton>
+                <LoadingButton type='button' hidden={clearErrorBtnHidden} onClick={clearError} className='btn btn-danger ml-2'>Clear Error</LoadingButton>
+            </div>
+            <div hidden={!message} className='alert alert-secondary mt-3' role='alert'>
+                {message}
+            </div>
+        </div >
+    );
 }

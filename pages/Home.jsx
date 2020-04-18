@@ -2,30 +2,20 @@ import React from 'react';
 import PageWrapper from '../templates/PageWrapper';
 import ConfigSection from '../components/ConfigSection';
 import PreviewSection from '../components/PreviewSection';
+import ScanListContext from '../components/ScanListContext';
 
-export default class Home extends React.Component {
-    constructor(props) {
-        super(props);
+export default function Home() {
 
-        this.state = {
-            scanList: []
-        };
-    }
+    const [scanList, setScanList] = React.useState([]);
 
-    updateScanList = async (newScanList) => {
-        await this.setState({
-            scanList: newScanList
-        });
-    }
-
-    render() {
-        return (
+    return (
+        <ScanListContext.Provider value={{ scanList, setScanList }}>
             <PageWrapper page='home'>
                 <div className='container mt-5'>
-                    <ConfigSection updateScanList={this.updateScanList} />
-                    <PreviewSection scanList={this.state.scanList} />
+                    <ConfigSection />
+                    <PreviewSection />
                 </div>
             </PageWrapper>
-        );
-    }
+        </ScanListContext.Provider>
+    );
 }

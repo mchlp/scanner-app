@@ -1,45 +1,39 @@
-import React, { Component } from 'react';
+import React from 'react';
 import path from 'path';
 import Axios from 'axios';
 import LoadingButton from './LoadingButton';
+import ScanListContext from './ScanListContext';
 
-export default class PreviewSection extends Component {
+export default function PreviewSection() {
+    const IMAGE_URL_PREFIX = '/api/getscan';
+    const [deleteElement, setDeleteElement] = React.useState(null);
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            deleting: null
-        };
-    }
+    const { scanList, setScanList } = React.useContext(ScanListContext);
 
-    CONSTANTS = {
-        IMAGE_URL_PREFIX: '/api/getscan'
-    }
-
-    deletePage = (imageURL) => {
-        this.setState({
-            deleting: imageURL
-        });
+    const deletePage = (imageURL) => {
+        setDeleteElement(imageURL);
         Axios.post('/api/deletescan', {
             imageURL
         });
-    }
+    };
 
-    render() {
-        const imageList = this.props.scanList.map((imageURL, index) => {
-            const deleteBtnLoading = this.state.deleting === imageURL ? 1 : 0;
-            const totalPages = this.props.scanList.length;
+    let imageList = [];
+    if (scanList) {
+        imageList = scanList.map((imageURL, index) => {
+            const deleteBtnLoading = deleteElement === imageURL ? 1 : 0;
+            const totalPages = scanList.length;
             return (
                 <div key={index}>
-                    <img width='100%' src={path.join(this.CONSTANTS.IMAGE_URL_PREFIX, imageURL)} />
-                    <div>Page {index + 1} of {totalPages} <LoadingButton type='button' loading={deleteBtnLoading} onClick={() => { this.deletePage(imageURL); }} className='btn btn-danger ml-2 my-2'>Delete Above Page</LoadingButton></div>
+                    <img width='100%' src={path.join(IMAGE_URL_PREFIX, imageURL)} />
+                    <div>Page {index + 1} of {totalPages} <LoadingButton type='button' loading={deleteBtnLoading} onClick={() => { deletePage(imageURL); }} className='btn btn-danger ml-2 my-2'>Delete Above Page</LoadingButton></div>
                 </div>
             );
         });
-        return (
-            <div>
-                {imageList}
-            </div>
-        );
     }
+
+    return (
+        <div>
+            {imageList}
+        </div>
+    );
 }
