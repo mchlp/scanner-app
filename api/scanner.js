@@ -1,5 +1,6 @@
 const child_process = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 // use scanimage to scan
 // use convert from imagemagick to convert images to pdf
@@ -9,31 +10,80 @@ const SAVE_URL_PREFIX = '../saves';
 
 const startScanFunc = (source, scanPageId, addToImageList) => {
     return new Promise((resolve, reject) => {
-        let args = ['--device-name="' + scanner.deviceName + '"', '--format=tiff', '--resolution=600'];
+        const sourceInt = parseInt(source);
+        let args = ['--device-name="' + scanner.deviceName + '"', '--format=tiff'];
 
-        if (source === 0) {
+        if (sourceInt === 0) {
             args.push('--source="Automatic Document Feeder"');
-            args.push('--batch=' + scanPageId + '-%d.tiff');
-        } else {
-            args.push('> ' + scanPageId + '.tiff');
+            args.push('--batch="' + scanPageId + '_%d.tiff"');
         }
 
-        let pageCount = 0;
-        scanner.scanProc = child_process.spawn('scanimage', args);
-        scanner.scanProc.on('data', (data) => {
+        args.push('--resolution=600');
+
+        let outFile;
+        if (sourceInt === 1) {
+            outFile = fs.createWriteStream(path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff'));
+        }
+
+        const scanOptions = {
+            shell: true,
+            stdio: ['pipe', 'pipe', 'pipe'],
+            cwd: path.join(__dirname, IMAGE_URL_PREFIX)
+        };
+
+        let pageCount = -1; // first page is nothing
+        scanner.scanProc = child_process.spawn('scanimage', args, scanOptions);
+        // scanner.scanProc = child_process.spawn('pwd');
+
+        scanner.scanProc.stdout.on('data', (data) => {
+            outFile.write(data);
+        });
+
+        scanner.scanProc.stderr.on('data', (data) => {
             const dataString = data.toString();
             console.log(dataString);
-            const scannedPageRegex = /Scanned page (\d+)/g;
-            const matches = scannedPageRegex.exec(dataString);
-            for (let i = 0; i < matches.length; i++) {
-                pageCount++;
-                addToImageList(scanPageId + '-' + pageCount + '.tiff');
+            const scannedPageRegex = /Scanned page (\d+)/gm;
+            const scannerBusyRegex = /Device busy/gm;
+            const scannedPageMatches = scannedPageRegex.exec(dataString);
+            const scannerBusyMatches = scannerBusyRegex.exec(dataString);
+            if (scannerBusyMatches !== null) {
+                reject('Scanner is busy');
+            }
+            if (scannedPageMatches !== null) {
+                for (let i = 0; i < scannedPageMatches.length; i++) {
+                    pageCount++;
+                    if (pageCount >= 1 && sourceInt === 0) {
+                        const args = [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.tiff'), path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.jpg')];
+                        const res = child_process.spawnSync('convert', args);
+                        let success = true;
+                        if (res.status !== 0) {
+                            success = false;
+                        }
+                        if (success) {
+                            child_process.spawnSync('rm', [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.tiff')]);
+                            addToImageList(scanPageId + '_' + pageCount + '.jpg');
+                        }
+                    }
+                }
             }
         });
+
         scanner.scanProc.on('close', (code) => {
+            console.log(code);
+            if (sourceInt === 1) {
+                const args = [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff'), path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg')];
+                const res = child_process.spawnSync('convert', args);
+                let success = true;
+                if (res.status !== 0) {
+                    success = false;
+                }
+                if (success) {
+                    child_process.spawnSync('rm', [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff')]);
+                    addToImageList(scanPageId + '.jpg');
+                }
+            }
             scanner.scanProc = null;
             if (code !== 0) {
-                console.log(code);
                 reject('Scanner encountered an error.');
             }
             resolve(pageCount);

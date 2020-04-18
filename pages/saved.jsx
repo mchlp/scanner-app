@@ -21,7 +21,7 @@ export default function Saved() {
         console.log(saveFile);
         const scanId = saveFile.split('.')[0];
         const thumbnail = scanId + '.jpg';
-        const dateTimestamp = parseInt(scanId.split('-')[1]);
+        const dateTimestamp = parseInt(scanId.split('_')[1]);
         const scanDate = new Date(dateTimestamp);
         const scanDateString = scanDate.toLocaleString('en-CA');
         return (

@@ -72,7 +72,7 @@ router.post('/scan', async (req, res, next) => {
         }
 
         if (globals.curScan.status === CONSTANTS.STATUSES.READY) {
-            const scanId = 'scan-' + Date.now();
+            const scanId = 'scan_' + Date.now();
             globals.curScan.scanId = scanId;
             globals.curScan.scanCount = 0;
             globals.curScan.scanList = [];
@@ -80,7 +80,7 @@ router.post('/scan', async (req, res, next) => {
 
         globals.curScan.status = CONSTANTS.STATUSES.SCANNING;
 
-        const scanPageId = globals.curScan.scanId + '-' + globals.curScan.scanCount;
+        const scanPageId = globals.curScan.scanId + '_' + globals.curScan.scanCount;
         globals.curScan.scanCount++;
 
         const addToImageList = (scannedImage) => {

@@ -140,6 +140,13 @@ export default function ConfigSection(props) {
         await checkStatus();
     };
 
+    const abortScan = async (e) => {
+        await Axios.post('/api/abort', {
+            scanId
+        });
+        await checkStatus();
+    };
+
     let sourcesSelectList;
     let sourcesLoaded = sources.length > 0;
     if (sourcesLoaded) {
@@ -159,6 +166,7 @@ export default function ConfigSection(props) {
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
     const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
     const clearErrorBtnHidden = !(status === STATUSES.ERROR);
+    const abortScanBtnHidden = !(status === STATUSES.SCANNING);
 
     return (
         <div>
@@ -178,6 +186,7 @@ export default function ConfigSection(props) {
             <div>
                 <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
                 <LoadingButton type='button' hidden={sendEmailBtnHidden} loading={sendEmailBtnLoading} onClick={saveScan} className='btn btn-success ml-2'>Save Scan</LoadingButton>
+                <LoadingButton type='button' hidden={abortScanBtnHidden} onClick={abortScan} className='btn btn-danger ml-2'>Abort Scan</LoadingButton>
                 <LoadingButton type='button' hidden={clearErrorBtnHidden} onClick={clearError} className='btn btn-danger ml-2'>Clear Error</LoadingButton>
             </div>
             <div hidden={!message} className='alert alert-secondary mt-3' role='alert'>
