@@ -87,17 +87,17 @@ router.post('/scan', async (req, res, next) => {
             globals.curScan.scanList.push(scannedImage);
         };
 
+        res.json({
+            success: true,
+            scanId: globals.curScan.scanId,
+        });
+
         scanner.startScan(source, scanPageId, addToImageList).then((scanCount) => {
             globals.curScan.status = CONSTANTS.STATUSES.DONE_SCAN;
         }).catch((err) => {
             globals.curScan.status = CONSTANTS.STATUSES.ERROR;
             console.error(err);
-        });
-
-        res.json({
-            success: true,
-            scanId: globals.curScan.scanId,
-        });
+        });    
     } catch (err) {
         next(err);
     }

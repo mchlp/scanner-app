@@ -69,7 +69,6 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
         });
 
         scanner.scanProc.on('close', (code) => {
-            console.log(code);
             if (sourceInt === 1) {
                 const args = [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff'), path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg')];
                 const res = child_process.spawnSync('convert', args);
@@ -157,7 +156,10 @@ const getSavesListFunc = () => {
 
 const abortFunc = async () => {
     if (scanner.scanProc) {
-        return scanner.scanProc.kill();
+        scanner.scanProc.kill();
+        if (scanner.scanProc.exitCode === null) {
+            scanner.scanProc.kill('SIGKILL');
+        }
     }
 };
 
