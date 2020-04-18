@@ -21,6 +21,7 @@ export default function ConfigSection(props) {
     const [sources, setSources] = React.useState([]);
     const [message, setMessage] = React.useState(null);
     const [scanId, setScanId] = React.useState(null);
+    const [checkStatusDone, setCheckStatusDone] = React.useState(true);
     const { scanList, setScanList } = React.useContext(ScanListContext);
 
     const checkStatusCallback = React.useRef();
@@ -64,6 +65,7 @@ export default function ConfigSection(props) {
                 checkStatusCallback.current();
             };
             clearInterval(checkStatusInterval.current);
+            setCheckStatusDone(true);
             checkStatusInterval.current = setInterval(tick, 1000);
         } else {
             setStatus(STATUSES.SCANNING_NOT_AUTH);
@@ -78,58 +80,61 @@ export default function ConfigSection(props) {
     };
 
     const checkStatus = async (e) => {
-        let res;
-        res = await Axios.post('/api/status', {
-            scanId
-        });
-        setStatus(res.data.status);
-        switch (res.data.status) {
-            case STATUSES.NOT_CONNECTED:
-                setMessage('Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.');
-                setStatusText('Not Connected');
-                setStatusRed(true);
-                break;
-            case STATUSES.READY:
-                if (status === STATUSES.PACKAGING) {
-                    setMessage('Scan successfully saved. Go to old scans page to download. Reload to start another scan.');
-                } else {
-                    setMessage('Scanner is ready.');
-                }
-                if (checkStatusInterval.current) {
-                    clearInterval(checkStatusInterval.current);
-                    checkStatusInterval.current = null;
-                }
-                setStatusText('Ready');
-                setStatusRed(false);
-                setScanList([]);
-                break;
-            case STATUSES.SCANNING_NOT_AUTH:
-                setMessage('Someone else is currently scanning. Please reload and try again later.');
-                setStatusText('In Use');
-                setStatusRed(true);
-                break;
-            case STATUSES.SCANNING:
-                setStatusText('Scanning');
-                setStatusRed(false);
-                setMessage('Scanning... Scan Job ID: ' + scanId);
-                setScanList(res.data.scanList);
-                break;
-            case STATUSES.DONE_SCAN:
-                setStatusText('Scan Complete');
-                setStatusRed(false);
-                setMessage('Scan Complete. Please preview the pages and click "Send Email" when ready or scan more pages.');
-                setScanList(res.data.scanList);
-                break;
-            case STATUSES.PACKAGING:
-                setStatusText('Packaging Scan');
-                setStatusRed(false);
-                setMessage('Packaging scan... Please wait.');
-                break;
-            case STATUSES.ERROR:
-                setStatusText('Error Encountered');
-                setStatusRed(true);
-                setMessage('An error occured. Please reload and try again.');
-                break;
+        if (checkStatusDone) {
+            let res;
+            res = await Axios.post('/api/status', {
+                scanId
+            });
+            setCheckStatusDone(true);
+            setStatus(res.data.status);
+            switch (res.data.status) {
+                case STATUSES.NOT_CONNECTED:
+                    setMessage('Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.');
+                    setStatusText('Not Connected');
+                    setStatusRed(true);
+                    break;
+                case STATUSES.READY:
+                    if (status === STATUSES.PACKAGING) {
+                        setMessage('Scan successfully saved. Go to old scans page to download. Reload to start another scan.');
+                    } else {
+                        setMessage('Scanner is ready.');
+                    }
+                    if (checkStatusInterval.current) {
+                        clearInterval(checkStatusInterval.current);
+                        checkStatusInterval.current = null;
+                    }
+                    setStatusText('Ready');
+                    setStatusRed(false);
+                    setScanList([]);
+                    break;
+                case STATUSES.SCANNING_NOT_AUTH:
+                    setMessage('Someone else is currently scanning. Please reload and try again later.');
+                    setStatusText('In Use');
+                    setStatusRed(true);
+                    break;
+                case STATUSES.SCANNING:
+                    setStatusText('Scanning');
+                    setStatusRed(false);
+                    setMessage('Scanning... Scan Job ID: ' + scanId);
+                    setScanList(res.data.scanList);
+                    break;
+                case STATUSES.DONE_SCAN:
+                    setStatusText('Scan Complete');
+                    setStatusRed(false);
+                    setMessage('Scan Complete. Please preview the pages and click "Send Email" when ready or scan more pages.');
+                    setScanList(res.data.scanList);
+                    break;
+                case STATUSES.PACKAGING:
+                    setStatusText('Packaging Scan');
+                    setStatusRed(false);
+                    setMessage('Packaging scan... Please wait.');
+                    break;
+                case STATUSES.ERROR:
+                    setStatusText('Error Encountered');
+                    setStatusRed(true);
+                    setMessage('An error occured. Please reload and try again.');
+                    break;
+            }
         }
     };
 
