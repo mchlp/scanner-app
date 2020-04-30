@@ -163,6 +163,16 @@ const abortFunc = async () => {
     }
 };
 
+const shutdownFunc = async () => {
+    return new Promise((resolve, reject) => {
+        const res = child_process.spawnSync('shutdown', ['-h', 'now']);
+        if (res.status !== 0) {
+            reject(res.stderr.toString());
+        }
+        resolve(res.stdout.toString());
+    });
+};
+
 const scanner = {
     scanProc: null,
     deviceName: null,
@@ -192,6 +202,10 @@ const scanner = {
 
     abort: async () => {
         return await abortFunc();
+    },
+
+    shutdown: async () => {
+        return await shutdownFunc();
     }
 };
 

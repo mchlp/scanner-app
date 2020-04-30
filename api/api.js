@@ -97,7 +97,7 @@ router.post('/scan', async (req, res, next) => {
         }).catch((err) => {
             globals.curScan.status = CONSTANTS.STATUSES.ERROR;
             console.error(err);
-        });    
+        });
     } catch (err) {
         next(err);
     }
@@ -258,6 +258,17 @@ router.get('/getsaves/:filename', (req, res, next) => {
             dotfiles: 'deny'
         };
         res.sendFile(filename, options);
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/shutdown', async (req, res, next) => {
+    try {
+        const success = await scanner.shutdown();
+        res.json({
+            success
+        });
     } catch (err) {
         next(err);
     }

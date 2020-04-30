@@ -10,10 +10,16 @@ export default function Admin() {
         });
     };
 
+    const shutdown = () => {
+        Axios.post('/shutdown');
+    };
+
     return (
         <PageWrapper page='admin'>
             <div className='container mt-5'>
                 <button className='btn btn-danger' onClick={abortJob}>Abort Current Job</button>
+                <button className='ml-3 btn btn-danger' onClick={shutdown}>Shutdown</button>
+
             </div>
         </PageWrapper>
     );
