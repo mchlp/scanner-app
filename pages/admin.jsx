@@ -11,7 +11,7 @@ export default function Admin() {
     };
 
     const shutdown = () => {
-        Axios.post('/shutdown');
+        Axios.post('/api/shutdown');
     };
 
     return (
