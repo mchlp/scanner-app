@@ -17,7 +17,10 @@ export default function Saved() {
         func();
     }, []);
 
-    const imageList = savesList.map((saveFile, index) => {
+    const parsedSavesList = [...savesList];
+    parsedSavesList.sort().reverse();
+
+    const imageList = parsedSavesList.map((saveFile, index) => {
         console.log(saveFile);
         const scanId = saveFile.split('.')[0];
         const thumbnail = scanId + '.jpg';
