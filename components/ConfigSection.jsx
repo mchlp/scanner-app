@@ -23,6 +23,7 @@ export default function ConfigSection(props) {
     const [scanId, setScanId] = React.useState(null);
     const [checkStatusDone, setCheckStatusDone] = React.useState(true);
     const { scanList, setScanList } = React.useContext(ScanListContext);
+    const [scanNextButtonLoading, setScanNextButtonLoading] = React.useState(false);
 
     const checkStatusCallback = React.useRef();
     const checkStatusInterval = React.useRef();
@@ -56,6 +57,7 @@ export default function ConfigSection(props) {
     }, [scanId]);
 
     const handleScan = async (e) => {
+        setScanNextButtonLoading(true);
         const res = await Axios.post('/api/scan', {
             source: document.getElementById('source-select').value
         });
@@ -87,6 +89,7 @@ export default function ConfigSection(props) {
             });
             setCheckStatusDone(true);
             setStatus(res.data.status);
+            setScanNextButtonLoading(false);
             switch (res.data.status) {
                 case STATUSES.NOT_CONNECTED:
                     setMessage('Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.');
@@ -167,7 +170,7 @@ export default function ConfigSection(props) {
     }
 
     const scanBtnHidden = !(status === STATUSES.READY || status === STATUSES.DONE_SCAN);
-    const scanBtnLoading = status === STATUSES.SCANNING ? 1 : 0;
+    const scanBtnLoading = status === scanNextButtonLoading ? 1 : 0;
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
     const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
     const clearErrorBtnHidden = !(status === STATUSES.ERROR);
@@ -189,7 +192,7 @@ export default function ConfigSection(props) {
                 </select>
             </div>
             <div>
-                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
+                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} disabled={scanBtnLoading} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
                 <LoadingButton type='button' hidden={sendEmailBtnHidden} loading={sendEmailBtnLoading} onClick={saveScan} className='btn btn-success ml-2'>Save Scan</LoadingButton>
                 <LoadingButton type='button' hidden={abortScanBtnHidden} onClick={abortScan} className='btn btn-danger ml-2'>Abort Scan</LoadingButton>
                 <LoadingButton type='button' hidden={clearErrorBtnHidden} onClick={clearError} className='btn btn-danger ml-2'>Clear Error</LoadingButton>
