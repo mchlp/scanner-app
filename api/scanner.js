@@ -10,6 +10,15 @@ const SAVE_URL_PREFIX = '../saves';
 
 const startScanFunc = (source, scanPageId, addToImageList) => {
     return new Promise((resolve, reject) => {
+        // delete old photos
+        const res = child_process.spawnSync('rm', ['*'], {
+            shell: true,
+            cwd: path.join(__dirname, IMAGE_URL_PREFIX)
+        });
+        if (res.status !== 0) {
+            console.error(res.stderr.toString());
+        }
+
         const sourceInt = parseInt(source);
         let args = ['--device-name="' + scanner.deviceName + '"', '--format=tiff'];
 
@@ -18,7 +27,7 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
             args.push('--batch="' + scanPageId + '_%d.tiff"');
         }
 
-        args.push('--resolution=600');
+        args.push('--resolution=' + scanner.scanQuality);
 
         let outFile;
         if (sourceInt === 1) {
@@ -90,6 +99,19 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
     });
 };
 
+const clearSavesFunc = () => {
+    return new Promise((resolve, reject) => {
+        const res = child_process.spawnSync('rm', ['*'], {
+            shell: true,
+            cwd: path.join(__dirname, SAVE_URL_PREFIX)
+        });
+        if (res.status !== 0) {
+            reject(res.stderr.toString());
+        }
+        resolve();
+    });
+};
+
 const saveScansFunc = (scanId, scanList) => {
     return new Promise((resolve, reject) => {
         const args = scanList.map((scanName) => {
@@ -109,7 +131,7 @@ const saveScanThumbnailFunc = (scanId, scanList) => {
     return new Promise((resolve, reject) => {
         const thumbnail = scanList[0];
         const thumbnailFile = scanId + '.jpg';
-        const args = [path.join(__dirname, IMAGE_URL_PREFIX, thumbnail), path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile)];
+        const args = [path.join(__dirname, IMAGE_URL_PREFIX, thumbnail), '-resize 250x250^', path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile)];
         const res = child_process.spawnSync('convert', args);
         if (res.status !== 0) {
             reject(res.stderr.toString());
@@ -176,9 +198,11 @@ const shutdownFunc = async () => {
 const scanner = {
     scanProc: null,
     deviceName: null,
+    scanQuality: null,
 
-    init: (deviceName) => {
+    init: (deviceName, scanQuality) => {
         scanner.deviceName = deviceName;
+        scanner.scanQuality = scanQuality;
     },
 
     checkConnection: async () => {
@@ -206,6 +230,10 @@ const scanner = {
 
     shutdown: async () => {
         return await shutdownFunc();
+    },
+
+    clearSaves: async () => {
+        return await clearSavesFunc();
     }
 };
 

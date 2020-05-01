@@ -37,7 +37,7 @@ let globals = {
 };
 
 const init = (config) => {
-    scanner.init(config['device-name']);
+    scanner.init(config['device-name'], config['scan-quality']);
 };
 
 router.get('/', (req, res, next) => {
@@ -258,6 +258,17 @@ router.get('/getsaves/:filename', (req, res, next) => {
             dotfiles: 'deny'
         };
         res.sendFile(filename, options);
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/clearSaves', async (req, res, next) => {
+    try {
+        const success = await scanner.clearSaves();
+        res.json({
+            success
+        });
     } catch (err) {
         next(err);
     }

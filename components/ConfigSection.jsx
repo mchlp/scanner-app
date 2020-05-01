@@ -97,7 +97,7 @@ export default function ConfigSection(props) {
                     if (status === STATUSES.PACKAGING) {
                         setMessage('Scan successfully saved. Go to old scans page to download. Reload to start another scan.');
                     } else {
-                        setMessage('Scanner is ready.');
+                        setMessage('Scanner is ready.  Select SCANS > Remote Scanner to enter scan mode.');
                     }
                     if (checkStatusInterval.current) {
                         clearInterval(checkStatusInterval.current);
@@ -121,7 +121,7 @@ export default function ConfigSection(props) {
                 case STATUSES.DONE_SCAN:
                     setStatusText('Scan Complete');
                     setStatusRed(false);
-                    setMessage('Scan Complete. Please preview the pages and click "Send Email" when ready or scan more pages.');
+                    setMessage('Scan Complete. Please preview the pages and click "Save Scans" when ready or scan more pages.');
                     setScanList(res.data.scanList);
                     break;
                 case STATUSES.PACKAGING:
