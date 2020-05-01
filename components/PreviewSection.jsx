@@ -19,6 +19,7 @@ export default function PreviewSection() {
 
     let imageList = [];
     if (scanList) {
+        scanList.sort().reverse();
         imageList = scanList.map((imageURL, index) => {
             const deleteBtnLoading = deleteElement === imageURL ? 1 : 0;
             const totalPages = scanList.length;
