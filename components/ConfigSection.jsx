@@ -171,6 +171,7 @@ export default function ConfigSection(props) {
 
     const scanBtnHidden = !(status === STATUSES.READY || status === STATUSES.DONE_SCAN);
     const scanBtnLoading = scanNextButtonLoading ? 1 : 0;
+    const scanBtnDisabled = scanNextButtonLoading;
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
     const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
     const clearErrorBtnHidden = !(status === STATUSES.ERROR);
@@ -192,7 +193,7 @@ export default function ConfigSection(props) {
                 </select>
             </div>
             <div>
-                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} disabled={scanBtnLoading} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
+                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} disabled={scanBtnDisabled} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
                 <LoadingButton type='button' hidden={sendEmailBtnHidden} loading={sendEmailBtnLoading} onClick={saveScan} className='btn btn-success ml-2'>Save Scan</LoadingButton>
                 <LoadingButton type='button' hidden={abortScanBtnHidden} onClick={abortScan} className='btn btn-danger ml-2'>Abort Scan</LoadingButton>
                 <LoadingButton type='button' hidden={clearErrorBtnHidden} onClick={clearError} className='btn btn-danger ml-2'>Clear Error</LoadingButton>

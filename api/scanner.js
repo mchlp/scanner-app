@@ -100,6 +100,14 @@ const clearSavesFunc = () => {
         if (res2.status !== 0) {
             reject(res2.stderr.toString());
         }
+        const res3 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, IMAGE_URL_PREFIX)]);
+        if (res3.status !== 0) {
+            reject(res3.stderr.toString());
+        }
+        const res4 = child_process.spawnSync('mkdir', [path.join(__dirname, IMAGE_URL_PREFIX)]);
+        if (res4.status !== 0) {
+            reject(res4.stderr.toString());
+        }
         resolve();
     });
 };
@@ -123,7 +131,7 @@ const saveScanThumbnailFunc = (scanId, scanList) => {
     return new Promise((resolve, reject) => {
         const thumbnail = scanList[0];
         const thumbnailFile = scanId + '.jpg';
-        const args = [path.join(__dirname, IMAGE_URL_PREFIX, thumbnail), '-resize 250x250^', path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile)];
+        const args = [path.join(__dirname, IMAGE_URL_PREFIX, thumbnail), '-resize', '250x250^', path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile)];
         const res = child_process.spawnSync('convert', args);
         if (res.status !== 0) {
             reject(res.stderr.toString());
@@ -134,17 +142,14 @@ const saveScanThumbnailFunc = (scanId, scanList) => {
 
 const cleanupScansFunc = (scanList) => {
     return new Promise((resolve, reject) => {
-        // delete old photos
-        const res1 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, IMAGE_URL_PREFIX)]);
-        if (res1.status !== 0) {
-            console.error(res1.stderr.toString());
+        const args = scanList.map((scanName) => {
+            return path.join(__dirname, IMAGE_URL_PREFIX, scanName);
+        });
+        const res = child_process.spawnSync('rm', args);
+        if (res.status !== 0) {
+            console.error(res.stderr.toString());
+            resolve();
         }
-
-        const res2 = child_process.spawnSync('mkdir', [path.join(__dirname, IMAGE_URL_PREFIX)]);
-        if (res2.status !== 0) {
-            console.error(res2.stderr.toString());
-        }
-        resolve();
     });
 };
 

@@ -33,7 +33,7 @@ export default function Saved() {
                 minWidth: '200px'
             }}>
                 <a href={path.join(SAVE_URL_PREFIX, saveFile)} download={saveFile}>
-                    <div className='card'>
+                    <div className='card mt-2'>
                         <div className='card-body'>
                             <img width='100%' src={path.join(SAVE_URL_PREFIX, thumbnail)}></img>
                             <div className='mt-2'><b>Scan Date: </b>{scanDateString}</div>
