@@ -66,7 +66,7 @@ export default function ConfigSection(props) {
             };
             clearInterval(checkStatusInterval.current);
             setCheckStatusDone(true);
-            checkStatusInterval.current = setInterval(tick, 3000);
+            checkStatusInterval.current = setInterval(tick, 1000);
         } else {
             setStatus(STATUSES.SCANNING_NOT_AUTH);
             setMessage('Someone else is currently scanning. Please try again later.');
