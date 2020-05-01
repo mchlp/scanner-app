@@ -175,7 +175,7 @@ export default function ConfigSection(props) {
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
     const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
     const clearErrorBtnHidden = !(status === STATUSES.ERROR);
-    const abortScanBtnHidden = !(status === STATUSES.SCANNING);
+    const abortScanBtnHidden = /*!(status === STATUSES.SCANNING)*/ true;
 
     return (
         <div>
