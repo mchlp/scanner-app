@@ -170,7 +170,7 @@ export default function ConfigSection(props) {
     }
 
     const scanBtnHidden = !(status === STATUSES.READY || status === STATUSES.DONE_SCAN);
-    const scanBtnLoading = status === scanNextButtonLoading ? 1 : 0;
+    const scanBtnLoading = scanNextButtonLoading ? 1 : 0;
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
     const sendEmailBtnLoading = status === STATUSES.PACKAGING ? 1 : 0;
     const clearErrorBtnHidden = !(status === STATUSES.ERROR);
