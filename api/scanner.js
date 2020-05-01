@@ -11,12 +11,14 @@ const SAVE_URL_PREFIX = '../saves';
 const startScanFunc = (source, scanPageId, addToImageList) => {
     return new Promise((resolve, reject) => {
         // delete old photos
-        const res = child_process.spawnSync('rm', ['*'], {
-            shell: true,
-            cwd: path.join(__dirname, IMAGE_URL_PREFIX)
-        });
-        if (res.status !== 0) {
-            console.error(res.stderr.toString());
+        const res1 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, IMAGE_URL_PREFIX)]);
+        if (res1.status !== 0) {
+            console.error(res1.stderr.toString());
+        }
+
+        const res2 = child_process.spawnSync('mkdir', [path.join(__dirname, IMAGE_URL_PREFIX)]);
+        if (res2.status !== 0) {
+            console.error(res2.stderr.toString());
         }
 
         const sourceInt = parseInt(source);
@@ -101,12 +103,13 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
 
 const clearSavesFunc = () => {
     return new Promise((resolve, reject) => {
-        const res = child_process.spawnSync('rm', ['*'], {
-            shell: true,
-            cwd: path.join(__dirname, SAVE_URL_PREFIX)
-        });
-        if (res.status !== 0) {
-            reject(res.stderr.toString());
+        const res1 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, SAVE_URL_PREFIX)]);
+        if (res1.status !== 0) {
+            reject(res1.stderr.toString());
+        }
+        const res2 = child_process.spawnSync('mkdir', [path.join(__dirname, SAVE_URL_PREFIX)]);
+        if (res2.status !== 0) {
+            reject(res2.stderr.toString());
         }
         resolve();
     });
