@@ -186,7 +186,7 @@ const abortFunc = async () => {
 
 const shutdownFunc = async () => {
     return new Promise((resolve, reject) => {
-        const res = child_process.spawnSync(path.join(__dirname, '/api/shutdown.sh'));
+        const res = child_process.spawnSync('shutdown', ['-h', 'now']);
         if (res.status !== 0) {
             reject(res.stderr.toString());
         }
