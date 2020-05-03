@@ -23,10 +23,16 @@ export default function Admin() {
 
     return (
         <PageWrapper page='admin'>
-            <div className='container mt-5'>
-                <button className='btn btn-danger' onClick={abortJob}>Abort Current Job</button>
-                <button className='ml-3 btn btn-danger' onClick={shutdown}>Shutdown</button>
-                <button className='ml-3 btn btn-danger' onClick={clearSaves}>Clear Saves</button>
+            <div className='container mt-5 text-center'>
+                <div className='mt-5'>
+                    <button className='btn btn-danger' onClick={abortJob}>Abort Current Job</button>
+                </div>
+                <div className='mt-5'>
+                    <button className='ml-3 btn btn-danger' onClick={shutdown}>Shutdown</button>
+                </div>
+                <div className='mt-5'>
+                    <button className='ml-3 btn btn-danger' onClick={clearSaves}>Clear Saves</button>
+                </div>
             </div>
         </PageWrapper>
     );
