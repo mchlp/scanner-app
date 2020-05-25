@@ -145,10 +145,12 @@ const cleanupScansFunc = (scanList) => {
         const args = scanList.map((scanName) => {
             return path.join(__dirname, IMAGE_URL_PREFIX, scanName);
         });
+        console.log(scanList);
+        console.log(args);
         const res = child_process.spawnSync('rm', args);
         if (res.status !== 0) {
             console.error(res.stderr.toString());
-            resolve();
+            reject(res.stderr.toString());
         }
     });
 };
