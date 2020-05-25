@@ -213,9 +213,12 @@ const scanner = {
     },
 
     saveScans: async (scanId, scanList) => {
+        console.log('startsavescan');
         const scanSave = await saveScansFunc(scanId, scanList);
+        console.log(scanSave);
         const thumbnailSave = await saveScanThumbnailFunc(scanId, scanList);
-        await cleanupScansFunc(scanList);
+        console.log(thumbnailSave);
+        console.log(await cleanupScansFunc(scanList));
         return [scanSave, thumbnailSave];
     },
 
