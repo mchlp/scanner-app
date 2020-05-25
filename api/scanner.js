@@ -145,13 +145,12 @@ const cleanupScansFunc = (scanList) => {
         const args = scanList.map((scanName) => {
             return path.join(__dirname, IMAGE_URL_PREFIX, scanName);
         });
-        console.log(scanList);
-        console.log(args);
         const res = child_process.spawnSync('rm', args);
         if (res.status !== 0) {
             console.error(res.stderr.toString());
-            reject(res.stderr.toString());
+            reject(false);
         }
+        resolve(true);
     });
 };
 
@@ -211,16 +210,15 @@ const scanner = {
     },
 
     startScan: async (source, scanPageId, addToImageList) => {
+        console.log('start scan');
         return await startScanFunc(source, scanPageId, addToImageList);
     },
 
     saveScans: async (scanId, scanList) => {
-        console.log('startsavescan');
+        console.log('start saving scan');
         const scanSave = await saveScansFunc(scanId, scanList);
-        console.log(scanSave);
         const thumbnailSave = await saveScanThumbnailFunc(scanId, scanList);
-        console.log(thumbnailSave);
-        console.log(await cleanupScansFunc(scanList));
+        await cleanupScansFunc(scanList);
         return [scanSave, thumbnailSave];
     },
 
