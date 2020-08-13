@@ -4,7 +4,6 @@ import LoadingButton from './LoadingButton';
 import ScanListContext from './ScanListContext';
 
 export default function ConfigSection(props) {
-
     const STATUSES = {
         NOT_CONNECTED: 'not_connected',
         READY: 'ready',
@@ -12,7 +11,7 @@ export default function ConfigSection(props) {
         SCANNING: 'scanning',
         DONE_SCAN: 'scan_done',
         PACKAGING: 'packaging',
-        ERROR: 'error'
+        ERROR: 'error',
     };
 
     const [status, setStatus] = React.useState(STATUSES.NOT_CONNECTED);
@@ -23,7 +22,9 @@ export default function ConfigSection(props) {
     const [scanId, setScanId] = React.useState(null);
     const [checkStatusDone, setCheckStatusDone] = React.useState(true);
     const { scanList, setScanList } = React.useContext(ScanListContext);
-    const [scanNextButtonLoading, setScanNextButtonLoading] = React.useState(false);
+    const [scanNextButtonLoading, setScanNextButtonLoading] = React.useState(
+        false
+    );
 
     const checkStatusCallback = React.useRef();
     const checkStatusInterval = React.useRef();
@@ -38,7 +39,7 @@ export default function ConfigSection(props) {
         return async function cleanup() {
             clearInterval(checkStatusInterval.current);
             await Axios.get('/api/abort', {
-                scanId
+                scanId,
             });
         };
     }, []);
@@ -59,7 +60,8 @@ export default function ConfigSection(props) {
     const handleScan = async (e) => {
         setScanNextButtonLoading(true);
         const res = await Axios.post('/api/scan', {
-            source: document.getElementById('source-select').value
+            source: document.getElementById('source-select').value,
+            scanQuality: document.getElementById('quality-select').value,
         });
         if (res.data.success) {
             setScanId(res.data.scanId);
@@ -71,13 +73,15 @@ export default function ConfigSection(props) {
             checkStatusInterval.current = setInterval(tick, 1000);
         } else {
             setStatus(STATUSES.SCANNING_NOT_AUTH);
-            setMessage('Someone else is currently scanning. Please try again later.');
+            setMessage(
+                'Someone else is currently scanning. Please try again later.'
+            );
         }
     };
 
     const saveScan = async (e) => {
         await Axios.post('/api/save', {
-            scanId
+            scanId,
         });
     };
 
@@ -85,22 +89,28 @@ export default function ConfigSection(props) {
         if (checkStatusDone) {
             let res;
             res = await Axios.post('/api/status', {
-                scanId
+                scanId,
             });
             setCheckStatusDone(true);
             setStatus(res.data.status);
             setScanNextButtonLoading(false);
             switch (res.data.status) {
                 case STATUSES.NOT_CONNECTED:
-                    setMessage('Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.');
+                    setMessage(
+                        'Scanner is not connected. Please check the connection and reload. Select SCANS > Remote Scanner to enter scan mode.'
+                    );
                     setStatusText('Not Connected');
                     setStatusRed(true);
                     break;
                 case STATUSES.READY:
                     if (status === STATUSES.PACKAGING) {
-                        setMessage('Scan successfully saved. Go to old scans page to download. Reload to start another scan.');
+                        setMessage(
+                            'Scan successfully saved. Go to old scans page to download. Reload to start another scan.'
+                        );
                     } else {
-                        setMessage('Scanner is ready.  Select SCANS > Remote Scanner to enter scan mode.');
+                        setMessage(
+                            'Scanner is ready.  Select SCANS > Remote Scanner to enter scan mode.'
+                        );
                     }
                     if (checkStatusInterval.current) {
                         clearInterval(checkStatusInterval.current);
@@ -111,7 +121,9 @@ export default function ConfigSection(props) {
                     setScanList([]);
                     break;
                 case STATUSES.SCANNING_NOT_AUTH:
-                    setMessage('Someone else is currently scanning. Please reload and try again later.');
+                    setMessage(
+                        'Someone else is currently scanning. Please reload and try again later.'
+                    );
                     setStatusText('In Use');
                     setStatusRed(true);
                     break;
@@ -124,7 +136,9 @@ export default function ConfigSection(props) {
                 case STATUSES.DONE_SCAN:
                     setStatusText('Scan Complete');
                     setStatusRed(false);
-                    setMessage('Scan Complete. Please preview the pages and click "Save Scans" when ready or scan more pages.');
+                    setMessage(
+                        'Scan Complete. Please preview the pages and click "Save Scans" when ready or scan more pages.'
+                    );
                     setScanList(res.data.scanList);
                     break;
                 case STATUSES.PACKAGING:
@@ -135,7 +149,9 @@ export default function ConfigSection(props) {
                 case STATUSES.ERROR:
                     setStatusText('Error Encountered');
                     setStatusRed(true);
-                    setMessage('An error occured. Please reload and try again.');
+                    setMessage(
+                        'An error occured. Please reload and try again.'
+                    );
                     break;
             }
         }
@@ -143,14 +159,14 @@ export default function ConfigSection(props) {
 
     const clearError = async (e) => {
         await Axios.post('/api/abort', {
-            force: true
+            force: true,
         });
         await checkStatus();
     };
 
     const abortScan = async (e) => {
         await Axios.post('/api/abort', {
-            scanId
+            scanId,
         });
         await checkStatus();
     };
@@ -160,16 +176,18 @@ export default function ConfigSection(props) {
     if (sourcesLoaded) {
         sourcesSelectList = sources.map((sources) => {
             return (
-                <option key={sources.id} value={sources.id}>{sources.name}</option>
+                <option key={sources.id} value={sources.id}>
+                    {sources.name}
+                </option>
             );
         });
     } else {
-        sourcesSelectList = (
-            <option>Sources Loading...</option>
-        );
+        sourcesSelectList = <option>Sources Loading...</option>;
     }
 
-    const scanBtnHidden = !(status === STATUSES.READY || status === STATUSES.DONE_SCAN);
+    const scanBtnHidden = !(
+        status === STATUSES.READY || status === STATUSES.DONE_SCAN
+    );
     const scanBtnLoading = scanNextButtonLoading ? 1 : 0;
     const scanBtnDisabled = scanNextButtonLoading;
     const sendEmailBtnHidden = !(status === STATUSES.DONE_SCAN);
@@ -179,28 +197,85 @@ export default function ConfigSection(props) {
 
     return (
         <div>
-            <div className={'card text-white bg-primary mb-2 ' + (statusRed ? 'bg-danger' : 'bg-success')}>
-                <div className='card-body'>
-                    <h5 className='card-text text-center'>
+            <div
+                className={
+                    'card text-white bg-primary mb-2 ' +
+                    (statusRed ? 'bg-danger' : 'bg-success')
+                }
+            >
+                <div className="card-body">
+                    <h5 className="card-text text-center">
                         <b>Status:</b> {statusText}
                     </h5>
                 </div>
             </div>
-            <div className='form-group'>
-                <label htmlFor='source-select'>Select Source:</label>
-                <select disabled={!sourcesLoaded} className='form-control' id='source-select'>
+            <div className="form-group">
+                <label htmlFor="source-select">Select Source:</label>
+                <select
+                    disabled={!sourcesLoaded}
+                    className="form-control"
+                    id="source-select"
+                >
                     {sourcesSelectList}
                 </select>
             </div>
-            <div>
-                <LoadingButton type='button' hidden={scanBtnHidden} loading={scanBtnLoading} disabled={scanBtnDisabled} onClick={handleScan} className='btn btn-primary'>Scan Next Page</LoadingButton>
-                <LoadingButton type='button' hidden={sendEmailBtnHidden} loading={sendEmailBtnLoading} onClick={saveScan} className='btn btn-success ml-2'>Save Scan</LoadingButton>
-                <LoadingButton type='button' hidden={abortScanBtnHidden} onClick={abortScan} className='btn btn-danger ml-2'>Abort Scan</LoadingButton>
-                <LoadingButton type='button' hidden={clearErrorBtnHidden} onClick={clearError} className='btn btn-danger ml-2'>Clear Error</LoadingButton>
+            <div className="form-group">
+                <label htmlFor="quality-select">Scan Quality:</label>
+                <select
+                    disabled={!sourcesLoaded}
+                    className="form-control"
+                    id="source-select"
+                >
+                    <option value="100">Full (100)</option>
+                    <option value="80">High (80)</option>
+                    <option value="60">Medium (60)</option>
+                    <option value="45">Low (45)</option>
+                </select>
             </div>
-            <div hidden={!message} className='alert alert-secondary mt-3' role='alert'>
+            <div>
+                <LoadingButton
+                    type="button"
+                    hidden={scanBtnHidden}
+                    loading={scanBtnLoading}
+                    disabled={scanBtnDisabled}
+                    onClick={handleScan}
+                    className="btn btn-primary"
+                >
+                    Scan Next Page
+                </LoadingButton>
+                <LoadingButton
+                    type="button"
+                    hidden={sendEmailBtnHidden}
+                    loading={sendEmailBtnLoading}
+                    onClick={saveScan}
+                    className="btn btn-success ml-2"
+                >
+                    Save Scan
+                </LoadingButton>
+                <LoadingButton
+                    type="button"
+                    hidden={abortScanBtnHidden}
+                    onClick={abortScan}
+                    className="btn btn-danger ml-2"
+                >
+                    Abort Scan
+                </LoadingButton>
+                <LoadingButton
+                    type="button"
+                    hidden={clearErrorBtnHidden}
+                    onClick={clearError}
+                    className="btn btn-danger ml-2"
+                >
+                    Clear Error
+                </LoadingButton>
+            </div>
+            <div
+                hidden={!message}
+                className="alert alert-secondary mt-3"
+                role="alert"
+            >
                 {message}
             </div>
-        </div >
+        </div>
     );
 }

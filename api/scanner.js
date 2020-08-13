@@ -8,7 +8,7 @@ const fs = require('fs');
 const IMAGE_URL_PREFIX = '../scans';
 const SAVE_URL_PREFIX = '../saves';
 
-const startScanFunc = (source, scanPageId, addToImageList) => {
+const startScanFunc = (source, scanPageId, addToImageList, scanQuality) => {
     return new Promise((resolve, reject) => {
         const sourceInt = parseInt(source);
         let args = [
@@ -100,11 +100,18 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
                         IMAGE_URL_PREFIX,
                         scanPageId + '.tiff'
                     ),
+                    '-quality',
+                    scanQuality,
+                    '-resize',
+                    '1200x1200^',
+                    '-gaussian-blur',
+                    '0.05',
                     path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg'),
                 ];
                 const res = child_process.spawnSync('convert', args);
                 let success = true;
                 if (res.status !== 0) {
+                    console.log(res);
                     success = false;
                 }
                 if (success) {
@@ -164,7 +171,6 @@ const saveScansFunc = (scanId, scanList) => {
         const args = scanList.map((scanName) => {
             return path.join(__dirname, IMAGE_URL_PREFIX, scanName);
         });
-        args.push('-compress', 'jpeg');
         const saveFile = scanId + '.pdf';
         args.push(path.join(__dirname, SAVE_URL_PREFIX, saveFile));
         const res = child_process.spawnSync('convert', args);
@@ -266,9 +272,9 @@ const scanner = {
         return await checkConnectionFunc();
     },
 
-    startScan: async (source, scanPageId, addToImageList) => {
+    startScan: async (source, scanPageId, addToImageList, scanQuality='60') => {
         console.log('start scan');
-        return await startScanFunc(source, scanPageId, addToImageList);
+        return await startScanFunc(source, scanPageId, addToImageList, scanQuality);
     },
 
     saveScans: async (scanId, scanList) => {

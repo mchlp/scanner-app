@@ -92,7 +92,7 @@ router.post('/scan', async (req, res, next) => {
             scanId: globals.curScan.scanId,
         });
 
-        scanner.startScan(source, scanPageId, addToImageList).then((scanCount) => {
+        scanner.startScan(source, scanPageId, addToImageList, req.body.scanQuality).then((scanCount) => {
             globals.curScan.status = CONSTANTS.STATUSES.DONE_SCAN;
         }).catch((err) => {
             globals.curScan.status = CONSTANTS.STATUSES.ERROR;
