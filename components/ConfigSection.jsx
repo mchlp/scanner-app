@@ -224,7 +224,7 @@ export default function ConfigSection(props) {
                 <select
                     disabled={!sourcesLoaded}
                     className="form-control"
-                    id="source-select"
+                    id="quality-select"
                 >
                     <option value="100">Full (100)</option>
                     <option value="80">High (80)</option>
