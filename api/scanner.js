@@ -11,7 +11,10 @@ const SAVE_URL_PREFIX = '../saves';
 const startScanFunc = (source, scanPageId, addToImageList) => {
     return new Promise((resolve, reject) => {
         const sourceInt = parseInt(source);
-        let args = ['--device-name="' + scanner.deviceName + '"', '--format=tiff'];
+        let args = [
+            '--device-name="' + scanner.deviceName + '"',
+            '--format=tiff',
+        ];
 
         if (sourceInt === 0) {
             args.push('--source="Automatic Document Feeder"');
@@ -22,13 +25,15 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
 
         let outFile;
         if (sourceInt === 1) {
-            outFile = fs.createWriteStream(path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff'));
+            outFile = fs.createWriteStream(
+                path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff')
+            );
         }
 
         const scanOptions = {
             shell: true,
             stdio: ['pipe', 'pipe', 'pipe'],
-            cwd: path.join(__dirname, IMAGE_URL_PREFIX)
+            cwd: path.join(__dirname, IMAGE_URL_PREFIX),
         };
 
         let pageCount = -1; // first page is nothing
@@ -53,15 +58,34 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
                 for (let i = 0; i < scannedPageMatches.length; i++) {
                     pageCount++;
                     if (pageCount >= 1 && sourceInt === 0) {
-                        const args = [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.tiff'), path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.jpg')];
+                        const args = [
+                            path.join(
+                                __dirname,
+                                IMAGE_URL_PREFIX,
+                                scanPageId + '_' + pageCount + '.tiff'
+                            ),
+                            path.join(
+                                __dirname,
+                                IMAGE_URL_PREFIX,
+                                scanPageId + '_' + pageCount + '.jpg'
+                            ),
+                        ];
                         const res = child_process.spawnSync('convert', args);
                         let success = true;
                         if (res.status !== 0) {
                             success = false;
                         }
                         if (success) {
-                            child_process.spawnSync('rm', [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '_' + pageCount + '.tiff')]);
-                            addToImageList(scanPageId + '_' + pageCount + '.jpg');
+                            child_process.spawnSync('rm', [
+                                path.join(
+                                    __dirname,
+                                    IMAGE_URL_PREFIX,
+                                    scanPageId + '_' + pageCount + '.tiff'
+                                ),
+                            ]);
+                            addToImageList(
+                                scanPageId + '_' + pageCount + '.jpg'
+                            );
                         }
                     }
                 }
@@ -70,14 +94,27 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
 
         scanner.scanProc.on('close', (code) => {
             if (sourceInt === 1) {
-                const args = [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff'), path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg')];
+                const args = [
+                    path.join(
+                        __dirname,
+                        IMAGE_URL_PREFIX,
+                        scanPageId + '.tiff'
+                    ),
+                    path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg'),
+                ];
                 const res = child_process.spawnSync('convert', args);
                 let success = true;
                 if (res.status !== 0) {
                     success = false;
                 }
                 if (success) {
-                    child_process.spawnSync('rm', [path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.tiff')]);
+                    child_process.spawnSync('rm', [
+                        path.join(
+                            __dirname,
+                            IMAGE_URL_PREFIX,
+                            scanPageId + '.tiff'
+                        ),
+                    ]);
                     addToImageList(scanPageId + '.jpg');
                 }
             }
@@ -92,19 +129,29 @@ const startScanFunc = (source, scanPageId, addToImageList) => {
 
 const clearSavesFunc = () => {
     return new Promise((resolve, reject) => {
-        const res1 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, SAVE_URL_PREFIX)]);
+        const res1 = child_process.spawnSync('rm', [
+            '-rf',
+            path.join(__dirname, SAVE_URL_PREFIX),
+        ]);
         if (res1.status !== 0) {
             reject(res1.stderr.toString());
         }
-        const res2 = child_process.spawnSync('mkdir', [path.join(__dirname, SAVE_URL_PREFIX)]);
+        const res2 = child_process.spawnSync('mkdir', [
+            path.join(__dirname, SAVE_URL_PREFIX),
+        ]);
         if (res2.status !== 0) {
             reject(res2.stderr.toString());
         }
-        const res3 = child_process.spawnSync('rm', ['-rf', path.join(__dirname, IMAGE_URL_PREFIX)]);
+        const res3 = child_process.spawnSync('rm', [
+            '-rf',
+            path.join(__dirname, IMAGE_URL_PREFIX),
+        ]);
         if (res3.status !== 0) {
             reject(res3.stderr.toString());
         }
-        const res4 = child_process.spawnSync('mkdir', [path.join(__dirname, IMAGE_URL_PREFIX)]);
+        const res4 = child_process.spawnSync('mkdir', [
+            path.join(__dirname, IMAGE_URL_PREFIX),
+        ]);
         if (res4.status !== 0) {
             reject(res4.stderr.toString());
         }
@@ -117,6 +164,7 @@ const saveScansFunc = (scanId, scanList) => {
         const args = scanList.map((scanName) => {
             return path.join(__dirname, IMAGE_URL_PREFIX, scanName);
         });
+        args.push('-compress', 'jpeg');
         const saveFile = scanId + '.pdf';
         args.push(path.join(__dirname, SAVE_URL_PREFIX, saveFile));
         const res = child_process.spawnSync('convert', args);
@@ -131,7 +179,12 @@ const saveScanThumbnailFunc = (scanId, scanList) => {
     return new Promise((resolve, reject) => {
         const thumbnail = scanList[0];
         const thumbnailFile = scanId + '.jpg';
-        const args = [path.join(__dirname, IMAGE_URL_PREFIX, thumbnail), '-resize', '250x250^', path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile)];
+        const args = [
+            path.join(__dirname, IMAGE_URL_PREFIX, thumbnail),
+            '-resize',
+            '250x250^',
+            path.join(__dirname, SAVE_URL_PREFIX, thumbnailFile),
+        ];
         const res = child_process.spawnSync('convert', args);
         if (res.status !== 0) {
             reject(res.stderr.toString());
@@ -166,9 +219,13 @@ const checkConnectionFunc = () => {
 
 const getSavesListFunc = () => {
     return new Promise((resolve, reject) => {
-        const res = child_process.spawnSync('find', ['.', '-type', 'f', '-name', '*.pdf', '-printf', '%f\n'], {
-            cwd: path.join(__dirname, SAVE_URL_PREFIX)
-        });
+        const res = child_process.spawnSync(
+            'find',
+            ['.', '-type', 'f', '-name', '*.pdf', '-printf', '%f\n'],
+            {
+                cwd: path.join(__dirname, SAVE_URL_PREFIX),
+            }
+        );
         if (res.status !== 0) {
             reject(res.stderr.toString());
         }
@@ -236,7 +293,7 @@ const scanner = {
 
     clearSaves: async () => {
         return await clearSavesFunc();
-    }
+    },
 };
 
 module.exports = scanner;
