@@ -103,9 +103,7 @@ const startScanFunc = (source, scanPageId, addToImageList, scanQuality) => {
                     '-quality',
                     scanQuality,
                     '-resize',
-                    '1200x1200^',
-                    '-gaussian-blur',
-                    '0.05',
+                    '2400x2400^',
                     path.join(__dirname, IMAGE_URL_PREFIX, scanPageId + '.jpg'),
                 ];
                 const res = child_process.spawnSync('convert', args);
